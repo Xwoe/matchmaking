@@ -9,18 +9,16 @@ In Quake Champions we used to have two skill ratings, which are based on the
 [Glicko-2 rating system](https://en.wikipedia.org/wiki/Glicko_rating_system) as
 far as I know. One skill rating is the skill for Duel mode and the other one 
 for the 2on2 mode. The latter unfortunately has been removed in the December
-2018 patch of the game (please bring it back!). I will describe how I 
-preprocessed this data and how the optimization 
-algorithm works.
+2018 patch of the game (please bring it back!). 
 
 # Matchmaking Algorithm
 
 ## 1 Preprocessing the Data
 First all available skill ratings of the participating players where gathered
 using a simple Google Sheet.
-If the skill rating was not available I had the players guess them or I made 
-an estimation myself.
-We need one single skill value for each player to create a good algorithm so I 
+If the skill rating was not available we had the players guess them or we made 
+an estimation ourselves.
+We need one single skill value for each player to create a good algorithm so we 
 calculated the means of the Duel and 2on2 skill ratings. The 2on2 rating is 
 probably the better estimation for team based modes, but you have to work with 
 what you got.
