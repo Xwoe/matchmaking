@@ -10,31 +10,34 @@ logger = get_logger(__name__)
 
 def main():
 
-
+    logger.info('#### Matchmaking by Xwoe ####')
      # initiate the parser
-    parser = argparse.ArgumentParser()
+    argparser = argparse.ArgumentParser()
 
     # add long and short argument
-    parser.add_argument("--input", "-i",
+    argparser.add_argument("--input", "-i",
                         help="csv-file to read from.")
-    parser.add_argument("--size", "-s", help="size of the teams")
+    argparser.add_argument("--size", "-s", help="size of the teams")
 
     # read arguments from the command line
-    args = parser.parse_args()
+    args = argparser.parse_args()
+    logger.info(args)
 
     if args.input:
         df = pd.read_csv(args.input)
     else:
-        parser.print_help()
+        argparser.print_help()
+        return
 
     if args.size:
         size = args.size
     else:
-        parser.print_help()
+        argparser.print_help()
+        return   
 
     if 'skill' not in df.columns:
         df['skill'] = np.nan
-        df['skill'] = df.apply(lambda row: np.nanmean([row['SR_Duel'], row['SR_2v2']]), 
+        df['skill'] = df.apply(lambda row: np.nanmean([row['Duel SR'], row['2v2 SR']]), 
                                axis=1)
 
     my_mm = mm.MatchMaking(df, teamsize=int(size))

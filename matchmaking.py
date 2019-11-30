@@ -56,6 +56,7 @@ class MatchMaking:
         noise_digits: int
             Number of digits, which are used to round off the noised values.
         """
+        logger.info('... starting matchmaking')
         self.df = df
         self.num_players = df.shape[0]
         self.teamsize = teamsize
@@ -203,7 +204,6 @@ class MatchMaking:
             there hasn't been an improvement since `max_counter` number of 
             iterations, iteration will be aborted.
         """
-        old_score = self.score.copy()
         counter = 0
         iter_num = 0
         while (counter < max_counter) & (iter_num < max_iter):
@@ -214,6 +214,7 @@ class MatchMaking:
                 counter = 0
             else:
                 counter += 1
+            logger.info(f'Iteration {iter_num}, best score: {self.score}')
         logger.info(f'Best result: {self.score}')
         self._write_result()
 
