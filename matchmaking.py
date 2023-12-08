@@ -9,6 +9,20 @@ from log import get_logger
 logger = get_logger(__name__)
 
 
+def check_input(df):
+    df.columns = [c for c in df.columns]
+    err_msg = f"Columns, which have to be present in the csv file: "
+    found_error = False
+    if "skill" not in df.columns:
+        err_msg += '"skill"'
+        found_error = True
+    elif "player" not in df.columns:
+        err_msg += ' "player"'
+        found_error = True
+    if found_error:
+        return err_msg
+
+
 class MatchMaking:
     """
     Implementation of a matchmaking algorithm to create balanced teams based on
@@ -43,7 +57,13 @@ class MatchMaking:
     """
 
     def __init__(
-        self, df, teamsize=3, min_max_pairing=False, noise_size=10000, noise_digits=2
+        self,
+        df,
+        teamsize=3,
+        min_max_pairing=False,
+        noise_size=10000,
+        noise_digits=2,
+        to_file=False,
     ):
         """
         Parameters
@@ -67,6 +87,7 @@ class MatchMaking:
         self.num_players = df.shape[0]
         self.teamsize = teamsize
         self.num_groups = self.num_players // self.teamsize
+        self.to_file = to_file
         self._set_outputdir()
         self.min_max_pairing = min_max_pairing
         self._add_noise(noise_size, noise_digits)
@@ -77,8 +98,9 @@ class MatchMaking:
         """
         Create a subfolder `output` as subdirectory of the script.
         """
-        self.OUTPUTDIR = os.path.join(os.getcwd(), "output")
-        os.makedirs(self.OUTPUTDIR, exist_ok=True)
+        if self.to_file:
+            self.OUTPUTDIR = os.path.join(os.getcwd(), "output")
+            os.makedirs(self.OUTPUTDIR, exist_ok=True)
 
     def _add_noise(self, noise_size, noise_digits):
         """
@@ -94,6 +116,7 @@ class MatchMaking:
         noise_digits: int
             Number of digits, which are used to round off the noised values.
         """
+        self.df["original_skill"] = self.df["skill"]
         self.df["skill"] = np.round(
             np.random.laplace(
                 self.df["skill"], self.df["skill"] / noise_size, self.df.shape[0]
@@ -124,7 +147,6 @@ class MatchMaking:
             logger.info(f"team_num: {team_num}")
             _df = self.df[self.df["team"] == -1]
             for skill_bin, group in _df.groupby("skill_bin"):
-
                 skill_tier = ""
                 if skill_bin == self.max_bin:
                     idx = group["skill"].idxmax()
@@ -224,18 +246,24 @@ class MatchMaking:
                 counter += 1
             logger.info(f"Iteration {iter_num}, best score: {self.score}")
         logger.info(f"Best result: {self.score}")
-        self._write_result()
+        self._prepare_results()
+        return self.df
 
-    def _write_result(self):
+    def _prepare_results(self):
         """
         Write the results of the optimization to a .csv file. Before storing
         the table is being sorted by teams.
         """
         self.df.sort_values("team", inplace=True)
         self.df["mean_dev"] = self.df["team"].apply(lambda x: self.team_means[x])
-        self.df.to_csv(
-            os.path.join(self.OUTPUTDIR, f"et_groupsize_{self.teamsize}.csv")
+        self.df = self.df.rename(
+            columns={"skill": "skill_plus_noise", "original_skill": "skill"}
         )
+        self.df["team"] = self.df["team"] + 1
+        if self.to_file:
+            self.df.to_csv(
+                os.path.join(self.OUTPUTDIR, f"et_groupsize_{self.teamsize}.csv")
+            )
         logger.info("\n" + self.df.to_string())
 
     @staticmethod
