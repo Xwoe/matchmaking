@@ -10,7 +10,7 @@ logger = get_logger(__name__)
 
 
 def check_input(df):
-    df.columns = [c.lower() for c in df.columns]
+    df.columns = [c for c in df.columns]
     err_msg = f"Columns, which have to be present in the csv file: "
     found_error = False
     if "skill" not in df.columns:
