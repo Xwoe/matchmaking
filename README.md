@@ -74,3 +74,8 @@ Team size of 8 (one team with 7, one with 8 players).
 python cmd_create_teams.py -i gql_skillrating.csv -s 8
 ```
 
+## Run Streamlit Frontend
+
+```
+streamlit run matchmaking_fe.py
+```
