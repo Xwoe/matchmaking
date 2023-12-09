@@ -53,6 +53,56 @@ def generate_fake_data():
     return pd.DataFrame({"player": players, "skill": skills})
 
 
+################ CSV file upload ################
+def input_csv():
+    ### File Uploader
+    st.session_state["uploaded_file"] = st.file_uploader("Choose a file")
+    if st.session_state["uploaded_file"] is not None:
+        # read csv
+        df = pd.read_csv(st.session_state["uploaded_file"])
+        err_msg = check_input(df)
+        print(f"AFTER UPLOADING uploaded file {st.session_state.uploaded_file}")
+        st.write(f"df shape in csv ", df.shape)
+        if err_msg:
+            print(f"err msg {err_msg}")
+            st.warning(err_msg)
+        else:
+            print(f"else")
+            st.session_state["df"] = df
+            # st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
+    else:
+        st.warning("You need to upload a csvfile.")
+    print(f"uploaded file {st.session_state.uploaded_file}")
+    print(f"csv df session state {st.session_state.df}")
+
+
+################ Manual Data Input ################
+def input_manual():
+    ### Data Editor
+    st.data_editor(
+        st.session_state["df"],
+        width=DF_WIDTH,
+        height=DF_HEIGHT,
+        use_container_width=False,
+        hide_index=None,
+        column_order=None,
+        column_config=None,
+        num_rows="dynamic",
+        disabled=False,
+        key=None,
+        on_change=None,
+        args=None,
+        kwargs=None,
+    )
+    print(f"manual df session state {st.session_state.df}")
+
+
+################ Fake Data ################
+def input_fake():
+    st.session_state["df"] = st.session_state["fake_data"]
+    # st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
+
+
 ###################################################
 
 
@@ -100,6 +150,10 @@ if "fake_data" not in st.session_state:
 if "uploaded_file" not in st.session_state:
     st.session_state["uploaded_file"] = None
 
+if "csv_visible" not in st.session_state:
+    st.session_state["csv_visible"] = "hidden"
+
+
 ### Data Input Choice Buttons
 
 choice_col_1, choice_col_2, choice_col_3 = st.columns(3)
@@ -107,111 +161,101 @@ choice_col_1, choice_col_2, choice_col_3 = st.columns(3)
 if choice_col_1.button(
     label="Load Example Data",
     type="primary",
+    on_click=input_fake,
     # disabled=button_disabled,
     use_container_width=False,
 ):
     st.session_state["input_choice"] = InputChoice.FAKE
 
-if choice_col_2.button(
-    label="Manual Data Input",
-    type="primary",
-    # disabled=button_disabled,
-    use_container_width=False,
-):
-    st.session_state["input_choice"] = InputChoice.MANUAL
+# if choice_col_2.button(
+#     label="Manual Data Input",
+#     type="primary",
+#     on_click=input_manual,
+#     # disabled=button_disabled,
+#     use_container_width=False,
+# ):
+#     st.session_state["input_choice"] = InputChoice.MANUAL
 
-if choice_col_3.button(
-    label="Upload CSV file",
-    type="primary",
-    # disabled=button_disabled,
-    use_container_width=False,
-):
-    st.session_state["input_choice"] = InputChoice.CSV
+# if choice_col_3.button(
+#     label="Upload CSV file",
+#     type="primary",
+#     # on_click=input_csv,
+#     # disabled=button_disabled,
+#     use_container_width=False,
+# ):
+#     st.session_state["input_choice"] = InputChoice.CSV
+#     st.session_state["csv_visible"] = "visible"
 
-################ CSV file upload ################
-if st.session_state["input_choice"] == InputChoice.CSV:
-    ### File Uploader
-    st.session_state["uploaded_file"] = st.file_uploader("Choose a file")
-    if st.session_state["uploaded_file"] is not None:
-        # read csv
-        df = pd.read_csv(st.session_state["uploaded_file"])
-        err_msg = check_input(df)
-        print(f"AFTER UPLOADING uploaded file {st.session_state.uploaded_file}")
-        st.write(f"df shape in csv ", df.shape)
-        if err_msg:
-            print(f"err msg {err_msg}")
-            st.warning(err_msg)
-        else:
-            print(f"else")
-            st.session_state["df"] = df
-            # st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
+
+st.session_state["uploaded_file"] = st.file_uploader("Choose a file")
+
+if st.session_state["uploaded_file"] is not None:
+    # read csv
+    df = pd.read_csv(st.session_state["uploaded_file"])
+    err_msg = check_input(df)
+    print(f"AFTER UPLOADING uploaded file {st.session_state.uploaded_file}")
+    st.write(f"df shape in csv ", df.shape)
+    if err_msg:
+        print(f"err msg {err_msg}")
+        st.warning(err_msg)
     else:
-        st.warning("You need to upload a csvfile.")
-    print(f"uploaded file {st.session_state.uploaded_file}")
-    print(f"csv df session state {st.session_state.df}")
-    st.write("WTF2")
-
-################ Manual Data Input ################
-elif st.session_state["input_choice"] == InputChoice.MANUAL:
-    ### Data Editor
-    st.data_editor(
-        st.session_state["df"],
-        width=DF_WIDTH,
-        height=DF_HEIGHT,
-        use_container_width=False,
-        hide_index=None,
-        column_order=None,
-        column_config=None,
-        num_rows="dynamic",
-        disabled=False,
-        key=None,
-        on_change=None,
-        args=None,
-        kwargs=None,
-    )
-    print(f"manual df session state {st.session_state.df}")
-
-################ Fake Data ################
-elif st.session_state["input_choice"] == InputChoice.FAKE:
-    st.session_state["df"] = st.session_state["fake_data"]
-    # st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
+        print(f"else")
+        st.session_state["df"] = df
+        # st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
 
 st.write("INPUT CHOICe", st.session_state["input_choice"])
 st.write("df shape", st.session_state["df"].shape)
 print(f"outside df session state {st.session_state.df}")
 
-if not st.session_state["df"].empty:
-    st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
+# if not st.session_state["df"].empty:
+#     st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
+st.data_editor(
+    st.session_state["df"],
+    width=DF_WIDTH,
+    height=DF_HEIGHT,
+    use_container_width=False,
+    hide_index=None,
+    column_order=None,
+    column_config=None,
+    num_rows="dynamic",
+    disabled=False,
+    key=None,
+    on_change=None,
+    args=None,
+    kwargs=None,
+)
 
-if st.session_state["input_choice"] != InputChoice.NADA:
-    num_players = st.session_state["df"].shape[0]
-    st.session_state["max_team_size"] = max([num_players // 2, 2])
-    ### Team Size
-    tsize_label = "Team Size"
-    team_size = st.number_input(
-        label=tsize_label,
-        value=2,
-        min_value=2,
-        max_value=st.session_state["max_team_size"],
-        step=1,
-        format="%i",
-        disabled=False,  # st.session_state["input_field_disabled"],
-        label_visibility="visible",  # st.session_state["input_field_visibility"],
+
+####### Teamsize Input ###########
+# if st.session_state["input_choice"] != InputChoice.NADA:
+num_players = st.session_state["df"].shape[0]
+st.session_state["max_team_size"] = max([num_players // 2, 2])
+### Team Size
+tsize_label = "Team Size"
+team_size = st.number_input(
+    label=tsize_label,
+    value=2,
+    min_value=2,
+    max_value=st.session_state["max_team_size"],
+    step=1,
+    format="%i",
+    disabled=False,  # st.session_state["input_field_disabled"],
+    label_visibility="visible",  # st.session_state["input_field_visibility"],
+)
+
+### Run optimization button
+
+opti_label = "Run Matchmaking"
+button_disabled = st.session_state["df"].empty or (team_size is None)
+if st.button(
+    label=opti_label,
+    type="primary",
+    disabled=button_disabled,
+    use_container_width=False,
+):
+    st.session_state["df_teams"] = run_optimization(
+        df=st.session_state["df"], teamsize=team_size
     )
-
-    ### Run optimization button
-
-    opti_label = "Run Matchmaking"
-    button_disabled = st.session_state["df"].empty or (team_size is None)
-    if st.button(
-        label=opti_label,
-        type="primary",
-        disabled=button_disabled,
-        use_container_width=False,
-    ):
-        st.session_state["df_teams"] = run_optimization(
-            df=st.session_state["df"], teamsize=team_size
-        )
 
 
 @st.cache_data
