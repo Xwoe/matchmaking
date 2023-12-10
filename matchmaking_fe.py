@@ -80,7 +80,7 @@ st.markdown(
     into teams such that the average skill of each team is more or less
     the same.
     
-    You can either upload a csv file, which contains columnar data in this format:
+    You can either upload a csv file, which must contain these two columns:
 
     * the column `player` with the player names
     * the column `skill` with the player's skill rating as a number
@@ -91,14 +91,7 @@ st.markdown(
     """
 )
 
-### init session state
 # Initialization
-if "input_field_hidden" not in st.session_state:
-    st.session_state["input_field_visibility"] = "hidden"
-
-if "input_field_disabled" not in st.session_state:
-    st.session_state["input_field_disabled"] = True
-
 if "max_team_size" not in st.session_state:
     st.session_state["max_team_size"] = 2
 
@@ -120,16 +113,9 @@ if "uploaded_file" not in st.session_state:
 if "fake_data_loaded" not in st.session_state:
     st.session_state["fake_data_loaded"] = None
 
-# if "csv_visible" not in st.session_state:
-#     st.session_state["csv_visible"] = "hidden"
-
-
 ### Data Input Choice Buttons
 
-# choice_col_1, choice_col_2 = st.columns(2)
-
 ## File uploader
-# st.session_state["uploaded_file"] = choice_col_1.file_uploader("Choose a file")
 st.session_state["uploaded_file"] = st.file_uploader(
     "Choose a file", on_change=on_upload_click
 )
@@ -194,12 +180,11 @@ team_size = st.number_input(
     max_value=st.session_state["max_team_size"],
     step=1,
     format="%i",
-    disabled=False,  # st.session_state["input_field_disabled"],
-    label_visibility="visible",  # st.session_state["input_field_visibility"],
+    disabled=False,
+    label_visibility="visible",
 )
 
 ### Run optimization button
-
 opti_label = "Run Matchmaking"
 button_disabled = st.session_state["df"].empty or (team_size is None)
 if st.button(
@@ -216,7 +201,6 @@ if st.button(
         st.session_state["df_teams"] = run_optimization(df=df, teamsize=team_size)
 
 
-# @st.cache_data
 def convert_df(df):
     return df.to_csv().encode("utf-8")
 

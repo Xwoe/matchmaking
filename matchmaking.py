@@ -23,6 +23,10 @@ def check_input(df):
         # check numbers in skill
         try:
             df["skill"].astype(float)
+            if df["skill"].isna().any():
+                err_msg = "Skill column has missing values"
+                return err_msg
+
         except ValueError:
             err_msg = "Skill column contains non number entries."
             print(err_msg)
@@ -92,7 +96,7 @@ class MatchMaking:
         """
         logger.info("... starting matchmaking")
         self.num_iterations = 0
-        self.df = df
+        self.df = self._process_df(df)
         self.num_players = df.shape[0]
         self.teamsize = teamsize
         self.num_groups = self.num_players // self.teamsize
@@ -102,6 +106,10 @@ class MatchMaking:
         self._add_noise(noise_size, noise_digits)
         self._set_bins()
         self._init_teams()
+
+    def _process_df(self, df):
+        df["skill"] = df["skill"].astype(float)
+        return df
 
     def _set_outputdir(self):
         """
