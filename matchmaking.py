@@ -19,6 +19,15 @@ def check_input(df):
     elif "player" not in df.columns:
         err_msg += ' "player"'
         found_error = True
+    else:
+        # check numbers in skill
+        try:
+            df["skill"].astype(float)
+        except ValueError:
+            err_msg = "Skill column contains non number entries."
+            print(err_msg)
+            return err_msg
+
     if found_error:
         return err_msg
 

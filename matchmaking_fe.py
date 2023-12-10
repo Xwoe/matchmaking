@@ -5,19 +5,16 @@ from enum import Enum
 from faker import Faker
 
 
-class InputChoice(Enum):
-    NADA = 1
-    MANUAL = 2
-    CSV = 3
-    FAKE = 4
-
-
 DF_WIDTH = 300
 DF_HEIGHT = 300
 FAKE_DATA_LENGTH = 16
 
 
 #################### Funcions ####################
+def get_empty_df():
+    return pd.DataFrame(
+        columns=["player", "skill"],
+    )
 
 
 def run_optimization(df, teamsize):
@@ -59,48 +56,36 @@ def input_csv():
     st.session_state["uploaded_file"] = st.file_uploader("Choose a file")
     if st.session_state["uploaded_file"] is not None:
         # read csv
-        df = pd.read_csv(st.session_state["uploaded_file"])
-        err_msg = check_input(df)
-        print(f"AFTER UPLOADING uploaded file {st.session_state.uploaded_file}")
-        st.write(f"df shape in csv ", df.shape)
+        err_msg = None
+        try:
+            df = pd.read_csv(st.session_state["uploaded_file"])
+            err_msg = check_input(df)
+        except pd.errors.ParserError:
+            err_msg = "Invalid CSV file, could not parse."
+
+        # print(f"AFTER UPLOADING uploaded file {st.session_state.uploaded_file}")
+        # st.write(f"df shape in csv ", df.shape)
         if err_msg:
-            print(f"err msg {err_msg}")
             st.warning(err_msg)
         else:
-            print(f"else")
             st.session_state["df"] = df
-            # st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
     else:
         st.warning("You need to upload a csvfile.")
     print(f"uploaded file {st.session_state.uploaded_file}")
     print(f"csv df session state {st.session_state.df}")
 
 
-################ Manual Data Input ################
-def input_manual():
-    ### Data Editor
-    st.data_editor(
-        st.session_state["df"],
-        width=DF_WIDTH,
-        height=DF_HEIGHT,
-        use_container_width=False,
-        hide_index=None,
-        column_order=None,
-        column_config=None,
-        num_rows="dynamic",
-        disabled=False,
-        key=None,
-        on_change=None,
-        args=None,
-        kwargs=None,
-    )
-    print(f"manual df session state {st.session_state.df}")
+def reset_session_dfs():
+    st.session_state["df"] = get_empty_df()
+    st.session_state["edit_df"] = get_empty_df()
+    st.session_state["team_df"] = None
 
 
 ################ Fake Data ################
 def input_fake():
+    reset_session_dfs()
     st.session_state["df"] = st.session_state["fake_data"]
-    # st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
+    st.session_state["edit_df"] = st.session_state["fake_data"]
 
 
 ###################################################
@@ -110,14 +95,18 @@ st.title("Matchmaking")
 st.markdown(
     """
     A little matchmaking algorithm to create balanced teams based 
-    on the players' skillratings. It works for any team size. All you 
-    need is a csv file, which contains:
+    on the players' skillratings. The app will try to put the players
+    into teams such that the average skill of each team is more or less
+    the same.
+    
+    You can either upload a csv file, which contains columnar data in this format:
 
     * the column `player` with the player names
     * the column `skill` with the player's skill rating as a number
-        
-    The skill rating has been evaluated with ranges around 500 - 2500. If you have 
-    very small values and are getting problems, try multiplying your values by 1000.
+
+    You can also enter the data manually in the table below or
+    if you just want to try it out, click the **Load Example Data** button, choose a
+    team size and let it run.
     """
 )
 
@@ -136,13 +125,10 @@ if "df_teams" not in st.session_state:
     st.session_state["df_teams"] = None
 
 if "df" not in st.session_state:
-    st.session_state["df"] = pd.DataFrame(
-        columns=["player", "skill"],
-        # dtype=[str, float]
-    )
+    st.session_state["df"] = get_empty_df()
 
-if "input_choice" not in st.session_state:
-    st.session_state["input_choice"] = InputChoice.NADA
+if "edit_df" not in st.session_state:
+    st.session_state["edit_df"] = get_empty_df()  # st.session_state["df"]
 
 if "fake_data" not in st.session_state:
     st.session_state["fake_data"] = generate_fake_data()
@@ -156,61 +142,42 @@ if "csv_visible" not in st.session_state:
 
 ### Data Input Choice Buttons
 
-choice_col_1, choice_col_2, choice_col_3 = st.columns(3)
+# choice_col_1, choice_col_2 = st.columns(2)
 
-if choice_col_1.button(
+## File uploader
+# st.session_state["uploaded_file"] = choice_col_1.file_uploader("Choose a file")
+st.session_state["uploaded_file"] = st.file_uploader("Choose a file")
+if st.session_state["uploaded_file"] is not None:
+    # read csv
+    try:
+        df = pd.read_csv(st.session_state["uploaded_file"])
+        err_msg = check_input(df)
+        if err_msg:
+            st.warning(err_msg)
+        else:
+            st.session_state["df"] = df
+            st.session_state["edit_df"] = df
+
+    except pd.errors.ParserError:
+        st.warning("Invalid CSV file, could not parse")
+
+## Example data button
+# if choice_col_2.button(
+if st.button(
     label="Load Example Data",
     type="primary",
-    on_click=input_fake,
+    # on_click=input_fake,
     # disabled=button_disabled,
     use_container_width=False,
 ):
-    st.session_state["input_choice"] = InputChoice.FAKE
+    input_fake()
+    print(st.session_state.df)
+    print(st.session_state.edit_df)
+    print(st.session_state.df_teams)
+#    st.session_state["input_choice"] = InputChoice.FAKE
 
-# if choice_col_2.button(
-#     label="Manual Data Input",
-#     type="primary",
-#     on_click=input_manual,
-#     # disabled=button_disabled,
-#     use_container_width=False,
-# ):
-#     st.session_state["input_choice"] = InputChoice.MANUAL
-
-# if choice_col_3.button(
-#     label="Upload CSV file",
-#     type="primary",
-#     # on_click=input_csv,
-#     # disabled=button_disabled,
-#     use_container_width=False,
-# ):
-#     st.session_state["input_choice"] = InputChoice.CSV
-#     st.session_state["csv_visible"] = "visible"
-
-
-st.session_state["uploaded_file"] = st.file_uploader("Choose a file")
-
-if st.session_state["uploaded_file"] is not None:
-    # read csv
-    df = pd.read_csv(st.session_state["uploaded_file"])
-    err_msg = check_input(df)
-    print(f"AFTER UPLOADING uploaded file {st.session_state.uploaded_file}")
-    st.write(f"df shape in csv ", df.shape)
-    if err_msg:
-        print(f"err msg {err_msg}")
-        st.warning(err_msg)
-    else:
-        print(f"else")
-        st.session_state["df"] = df
-        # st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
-
-st.write("INPUT CHOICe", st.session_state["input_choice"])
-st.write("df shape", st.session_state["df"].shape)
-print(f"outside df session state {st.session_state.df}")
-
-# if not st.session_state["df"].empty:
-#     st.dataframe(st.session_state["df"], width=DF_WIDTH, height=DF_HEIGHT)
-st.data_editor(
-    st.session_state["df"],
+st.session_state["df"] = st.data_editor(
+    st.session_state["edit_df"],
     width=DF_WIDTH,
     height=DF_HEIGHT,
     use_container_width=False,
@@ -225,9 +192,7 @@ st.data_editor(
     kwargs=None,
 )
 
-
 ####### Teamsize Input ###########
-# if st.session_state["input_choice"] != InputChoice.NADA:
 num_players = st.session_state["df"].shape[0]
 st.session_state["max_team_size"] = max([num_players // 2, 2])
 ### Team Size
@@ -253,12 +218,15 @@ if st.button(
     disabled=button_disabled,
     use_container_width=False,
 ):
-    st.session_state["df_teams"] = run_optimization(
-        df=st.session_state["df"], teamsize=team_size
-    )
+    err_msg = check_input(st.session_state["df"])
+    if err_msg:
+        st.warning(err_msg)
+    else:
+        df = st.session_state["df"]
+        st.session_state["df_teams"] = run_optimization(df=df, teamsize=team_size)
 
 
-@st.cache_data
+# @st.cache_data
 def convert_df(df):
     return df.to_csv().encode("utf-8")
 
