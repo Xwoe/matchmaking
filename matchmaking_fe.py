@@ -73,6 +73,7 @@ def input_fake():
 
 
 st.title("Matchmaking")
+st.caption("by [Xwoe](https://github.com/Xwoe/matchmaking)")
 st.markdown(
     """
     A little matchmaking algorithm to create balanced teams based 
