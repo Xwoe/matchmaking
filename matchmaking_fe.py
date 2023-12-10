@@ -50,42 +50,23 @@ def generate_fake_data():
     return pd.DataFrame({"player": players, "skill": skills})
 
 
-################ CSV file upload ################
-def input_csv():
-    ### File Uploader
-    st.session_state["uploaded_file"] = st.file_uploader("Choose a file")
-    if st.session_state["uploaded_file"] is not None:
-        # read csv
-        err_msg = None
-        try:
-            df = pd.read_csv(st.session_state["uploaded_file"])
-            err_msg = check_input(df)
-        except pd.errors.ParserError:
-            err_msg = "Invalid CSV file, could not parse."
-
-        # print(f"AFTER UPLOADING uploaded file {st.session_state.uploaded_file}")
-        # st.write(f"df shape in csv ", df.shape)
-        if err_msg:
-            st.warning(err_msg)
-        else:
-            st.session_state["df"] = df
-    else:
-        st.warning("You need to upload a csvfile.")
-    print(f"uploaded file {st.session_state.uploaded_file}")
-    print(f"csv df session state {st.session_state.df}")
-
-
 def reset_session_dfs():
-    st.session_state["df"] = get_empty_df()
     st.session_state["edit_df"] = get_empty_df()
+    st.session_state["df"] = get_empty_df()
     st.session_state["team_df"] = None
+    st.session_state["uploaded_file"] = None
+
+
+def on_upload_click():
+    st.session_state["fake_data_loaded"] = False
 
 
 ################ Fake Data ################
 def input_fake():
     reset_session_dfs()
-    st.session_state["df"] = st.session_state["fake_data"]
     st.session_state["edit_df"] = st.session_state["fake_data"]
+    st.session_state["df"] = st.session_state["fake_data"]
+    st.session_state["fake_data_loaded"] = True
 
 
 ###################################################
@@ -136,8 +117,11 @@ if "fake_data" not in st.session_state:
 if "uploaded_file" not in st.session_state:
     st.session_state["uploaded_file"] = None
 
-if "csv_visible" not in st.session_state:
-    st.session_state["csv_visible"] = "hidden"
+if "fake_data_loaded" not in st.session_state:
+    st.session_state["fake_data_loaded"] = None
+
+# if "csv_visible" not in st.session_state:
+#     st.session_state["csv_visible"] = "hidden"
 
 
 ### Data Input Choice Buttons
@@ -146,8 +130,12 @@ if "csv_visible" not in st.session_state:
 
 ## File uploader
 # st.session_state["uploaded_file"] = choice_col_1.file_uploader("Choose a file")
-st.session_state["uploaded_file"] = st.file_uploader("Choose a file")
-if st.session_state["uploaded_file"] is not None:
+st.session_state["uploaded_file"] = st.file_uploader(
+    "Choose a file", on_change=on_upload_click
+)
+if (st.session_state["uploaded_file"] is not None) and (
+    not st.session_state["fake_data_loaded"]
+):
     # read csv
     try:
         df = pd.read_csv(st.session_state["uploaded_file"])
@@ -162,19 +150,21 @@ if st.session_state["uploaded_file"] is not None:
         st.warning("Invalid CSV file, could not parse")
 
 ## Example data button
-# if choice_col_2.button(
 if st.button(
     label="Load Example Data",
-    type="primary",
-    # on_click=input_fake,
-    # disabled=button_disabled,
+    type="secondary",
     use_container_width=False,
 ):
     input_fake()
+    print("------------df after fake button ----------------")
     print(st.session_state.df)
+    print("------------edit df after fake button ----------------")
     print(st.session_state.edit_df)
+    print("------------df_teams after fake button ----------------")
     print(st.session_state.df_teams)
-#    st.session_state["input_choice"] = InputChoice.FAKE
+    print("------------uploaded file  after fake button ----------------")
+    print(st.session_state.uploaded_file)
+
 
 st.session_state["df"] = st.data_editor(
     st.session_state["edit_df"],
