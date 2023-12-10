@@ -142,14 +142,6 @@ if st.button(
     use_container_width=False,
 ):
     input_fake()
-    print("------------df after fake button ----------------")
-    print(st.session_state.df)
-    print("------------edit df after fake button ----------------")
-    print(st.session_state.edit_df)
-    print("------------df_teams after fake button ----------------")
-    print(st.session_state.df_teams)
-    print("------------uploaded file  after fake button ----------------")
-    print(st.session_state.uploaded_file)
 
 
 st.session_state["df"] = st.data_editor(
