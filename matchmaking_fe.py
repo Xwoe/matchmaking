@@ -194,7 +194,7 @@ if st.button(
 
 
 def convert_df(df):
-    return df.to_csv().encode("utf-8")
+    return df[["skill", "team"]].to_csv().encode("utf-8")
 
 
 if st.session_state["df_teams"] is not None:
