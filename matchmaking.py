@@ -147,7 +147,7 @@ class MatchMaking:
         `self.teamsize`.
         """
         self.df["skill_bin"], self.bins = pd.qcut(
-            self.df.skill, self.teamsize, retbins=True, labels=False
+            self.df.skill, self.teamsize, retbins=True, labels=False, duplicates='drop'
         )
         self.max_bin = self.df.skill_bin.max()
         self.min_bin = self.df.skill_bin.min()
